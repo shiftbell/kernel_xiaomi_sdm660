@@ -463,11 +463,7 @@ static struct fg_alg_flag pmi8998_v2_alg_flags[] = {
 	},
 };
 
-#ifdef CONFIG_MACH_XIAOMI_PLATINA
-static int fg_gen3_debug_mask = FG_IRQ | FG_STATUS;
-#else
 static int fg_gen3_debug_mask;
-#endif
 
 static bool fg_profile_dump;
 static ssize_t profile_dump_show(struct device *dev, struct device_attribute
@@ -2253,7 +2249,6 @@ static int fg_esr_timer_config(struct fg_dev *fg, bool sleep)
 	return 0;
 }
 
-#ifdef CONFIG_MACH_XIAOMI_PLATINA
 static void fg_esr_timer_config_work(struct work_struct *work)
 {
 	struct fg_dev *fg = container_of(work, struct fg_dev,
@@ -2264,7 +2259,6 @@ static void fg_esr_timer_config_work(struct work_struct *work)
 	if (rc < 0)
 		pr_err("Error in configuring ESR timer, rc=%d\n", rc);
 }
-#endif
 
 static void fg_ttf_update(struct fg_dev *fg)
 {
@@ -3814,9 +3808,8 @@ static int fg_psy_get_property(struct power_supply *psy,
 		if (-EINVAL != fg->bp.nom_cap_uah)
 			pval->intval = fg->bp.nom_cap_uah * 1000;
 		else
-#else
-		pval->intval = chip->cl.nom_cap_uah;
 #endif
+		pval->intval = chip->cl.nom_cap_uah;
 		break;
 	case POWER_SUPPLY_PROP_RESISTANCE_ID:
 		pval->intval = fg->batt_id_ohms;
@@ -5900,9 +5893,8 @@ static int fg_gen3_probe(struct platform_device *pdev)
 	INIT_WORK(&fg->esr_filter_work, esr_filter_work);
 	alarm_init(&fg->esr_filter_alarm, ALARM_BOOTTIME,
 			fg_esr_filter_alarm_cb);
-
-#ifdef CONFIG_MACH_XIAOMI_PLATINA
 	INIT_DELAYED_WORK(&fg->esr_timer_config_work, fg_esr_timer_config_work);
+#ifdef CONFIG_MACH_XIAOMI_PLATINA
 	INIT_DELAYED_WORK(&fg->soc_work, soc_work_fn);
 	INIT_DELAYED_WORK(&fg->soc_monitor_work, soc_monitor_work);
 	INIT_DELAYED_WORK(&fg->empty_restart_fg_work, empty_restart_fg_work);
@@ -6057,16 +6049,7 @@ static int fg_gen3_resume(struct device *dev)
 {
 	struct fg_gen3_chip *chip = dev_get_drvdata(dev);
 	struct fg_dev *fg = &chip->fg;
-#ifdef CONFIG_MACH_XIAOMI_PLATINA
 	schedule_delayed_work(&fg->esr_timer_config_work, 0);
-#else
-	int rc;
-
-	rc = fg_esr_timer_config(fg, false);
-	if (rc < 0)
-		pr_err("Error in configuring ESR timer, rc=%d\n", rc);
-#endif
-
 	queue_delayed_work(system_power_efficient_wq, &chip->ttf_work, 0);
 	if (fg_sram_dump)
 		queue_delayed_work(system_power_efficient_wq, &fg->sram_dump_work,
