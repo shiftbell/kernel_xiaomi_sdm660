@@ -188,11 +188,7 @@ struct smb2 {
 	bool			bad_part;
 };
 
-#ifdef CONFIG_MACH_XIAOMI_PLATINA
-static int __debug_mask = PR_MISC | PR_PARALLEL | PR_OTG;
-#else
 static int __debug_mask;
-#endif
 
 #ifdef CONFIG_MACH_XIAOMI_PLATINA
 static int __weak_chg_icl_ua = 700000;
@@ -727,11 +723,6 @@ static int smb2_usb_get_prop(struct power_supply *psy,
 		val->intval = get_client_vote(chg->disable_power_role_switch,
 					      MOISTURE_VOTER);
 		break;
-#ifdef CONFIG_MACH_XIAOMI_PLATINA
-	case POWER_SUPPLY_PROP_TYPE_RECHECK:
-		rc = smblib_get_prop_type_recheck(chg, val);
-		break;
-#endif
 	default:
 		pr_err("get prop %d is not supported in usb\n", psp);
 		rc = -EINVAL;
@@ -1341,7 +1332,7 @@ static int smb2_batt_get_prop(struct power_supply *psy,
 					      FG_ESR_VOTER);
 		break;
 	case POWER_SUPPLY_PROP_TECHNOLOGY:
-#if defined(CONFIG_MACH_ASUS_SDM660) || defined(CONFIG_MACH_XIAOMI_PLATINA)
+#ifdef CONFIG_MACH_XIAOMI_PLATINA
 		val->intval = POWER_SUPPLY_TECHNOLOGY_LIPO;
 #else
 		val->intval = POWER_SUPPLY_TECHNOLOGY_LION;
@@ -1371,10 +1362,8 @@ static int smb2_batt_get_prop(struct power_supply *psy,
 		break;
 	case POWER_SUPPLY_PROP_CHARGE_COUNTER:
 	case POWER_SUPPLY_PROP_CHARGE_FULL:
+#ifndef CONFIG_MACH_XIAOMI_PLATINA
 	case POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN:
-#ifdef CONFIG_MACH_XIAOMI_PLATINA
-		rc = smblib_get_prop_batt_charge_full(chg, val);
-		break;
 #endif
 	case POWER_SUPPLY_PROP_CYCLE_COUNT:
 	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
@@ -1391,6 +1380,9 @@ static int smb2_batt_get_prop(struct power_supply *psy,
 		val->intval = chg->fcc_stepper_enable;
 		break;
 #ifdef CONFIG_MACH_XIAOMI_PLATINA
+	case POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN:
+		rc = smblib_get_prop_batt_charge_full(chg, val);
+		break;
 	case POWER_SUPPLY_PROP_CHARGER_TYPE:
 		val->intval = chg->real_charger_type;
 		break;
@@ -2474,6 +2466,9 @@ static struct smb_irq_info smb2_irqs[] = {
 		.name		= "switcher-power-ok",
 		.handler	= smblib_handle_switcher_power_ok,
 		.wake		= true,
+#ifdef CONFIG_MACH_XIAOMI_PLATINA
+		.wake		= true,
+#endif
 		.storm_data	= {true, 1000, 8},
 	},
 };
