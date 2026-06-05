@@ -2423,6 +2423,32 @@ int smblib_get_prop_batt_current_now(struct smb_charger *chg,
 	return rc;
 }
 
+int smblib_get_prop_batt_resistance_id(struct smb_charger *chg,
+				     union power_supply_propval *val)
+{
+	int rc;
+
+	if (!chg->bms_psy)
+		return -EINVAL;
+
+	rc = power_supply_get_property(chg->bms_psy,
+				       POWER_SUPPLY_PROP_RESISTANCE_ID, val);
+	return rc;
+}
+
+int smblib_get_prop_batt_charge_full_design(struct smb_charger *chg,
+				     union power_supply_propval *val)
+{
+	int rc;
+
+	if (!chg->bms_psy)
+		return -EINVAL;
+
+	rc = power_supply_get_property(chg->bms_psy,
+				       POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN, val);
+	return rc;
+}
+
 int smblib_get_prop_batt_temp(struct smb_charger *chg,
 			      union power_supply_propval *val)
 {
@@ -2458,7 +2484,6 @@ int smblib_get_prop_batt_charge_done(struct smb_charger *chg,
 	if (val->intval == 1)
 		vote(chg->awake_votable, CHG_AWAKE_VOTER, false, 0);
 #endif
-
 	return 0;
 }
 
@@ -2675,9 +2700,11 @@ int smblib_set_prop_system_temp_level(struct smb_charger *chg,
 
 	chg->system_temp_level = val->intval;
 
-#ifdef CONFIG_MACH_XIAOMI_PLATINA
 	vote(chg->pl_disable_votable, THERMAL_DAEMON_VOTER,
+#ifdef CONFIG_MACH_XIAOMI_PLATINA
 			(chg->system_temp_level > 8) ? true : false, 0);
+#else
+			chg->system_temp_level ? true : false, 0);
 #endif
 
 #ifdef CONFIG_MACH_XIAOMI_PLATINA
