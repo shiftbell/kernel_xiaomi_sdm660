@@ -123,11 +123,7 @@ enum {
 };
 
 #ifdef CONFIG_DEBUG_FS
-#ifdef CONFIG_MACH_XIAOMI_PLATINA
-static int debug_mask = PR_PARALLEL;
-#else
 static int debug_mask;
-#endif
 #endif
 
 #ifdef DEBUG
